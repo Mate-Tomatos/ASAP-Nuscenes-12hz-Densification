@@ -20,10 +20,15 @@ class SP3DOptions:
         self.parser.add_argument('--lidar_inf_rst_path', 
                                 type=str,
                                 default='./out/lidar_20Hz/results_nusc.json')
-        self.parser.add_argument('--data_version', 
+        self.parser.add_argument('--data_version',
                                 help='nuscenes version',
                                 type=str,
                                 default='v1.0-trainval')
+        self.parser.add_argument('--split',
+                                help='nuscenes split to process: val/train/trainval',
+                                type=str,
+                                default='val',
+                                choices=['val', 'train', 'trainval'])
         self.parser.add_argument('--input_frequency', 
                                 help='input frequency',
                                 type=int,

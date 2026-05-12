@@ -43,17 +43,21 @@ def get_prev_next_instance_tokens(sample):
     
     return prev_inst_map, next_inst_map
 
-def get_nusc_val_token(nusc):
+def get_nusc_val_token(nusc, split='val'):
     splits = create_splits_scenes()
-    val_scene_ids = splits['val']
+    if split == 'trainval':
+        val_scene_ids = list(splits['train']) + list(splits['val'])
+    else:
+        val_scene_ids = list(splits[split])
+    val_scene_ids_set = set(val_scene_ids)
     sample_tokens_all = [s['token'] for s in nusc.sample]
     sample_val_tokens = []
     for sample_token in sample_tokens_all:
         scene_token = nusc.get('sample', sample_token)['scene_token']
         scene_record = nusc.get('scene', scene_token)
-        if scene_record['name'] in val_scene_ids:
+        if scene_record['name'] in val_scene_ids_set:
             sample_val_tokens.append(sample_token)
-    print("total samples in val: {}".format(len(sample_val_tokens)))  # 6019
+    print("total samples in {}: {}".format(split, len(sample_val_tokens)))
     return sample_val_tokens, val_scene_ids
 
 
@@ -179,7 +183,7 @@ if __name__ == '__main__':
 
     # generate instance token
     print('generating instance tokens...')
-    sample_val_tokens, val_scene_ids = get_nusc_val_token(nusc)
+    sample_val_tokens, val_scene_ids = get_nusc_val_token(nusc, split=opts.split)
     new_20Hz_inf_rst, prev_num, next_num, bad_num = generate_instance_tokens(sample_val_tokens, nusc_20Hz_inf_rst)
     print('prev_num:', np.array(prev_num).mean())
     print('next_num:', np.array(next_num).mean())
@@ -190,5 +194,3 @@ if __name__ == '__main__':
     out_dir = opts.lidar_inf_rst_path.split('.json')[0]
     with open(out_dir+ '_with_instance_token.json', 'w') as f:
         json.dump(new_20Hz_inf_rst, f)
-
-    

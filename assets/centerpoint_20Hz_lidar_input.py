@@ -168,7 +168,7 @@ data = dict(
     train=dict(
         type='CBGSDataset',
         data_root='data/nuscenes/',
-        ann_file='ASAP/out/lidar_20Hz/20Hz_lidar_infos_val.pkl',  # TODO modify your path
+        ann_file='/data/smx/ASAP/out/lidar_20Hz/20Hz_lidar_infos_val.pkl',  # TODO modify your path
         pipeline=[
             dict(
                 type='LoadPointsFromFile',
@@ -230,7 +230,7 @@ data = dict(
         dataset=dict(
             type='NuScenesDataset',
             data_root='data/nuscenes/',
-            ann_file='ASAP/out/lidar_20Hz/20Hz_lidar_infos_val.pkl',   # TODO modify your path
+            ann_file='/data/smx/ASAP/out/lidar_20Hz/20Hz_lidar_infos_val.pkl',   # TODO modify your path
             pipeline=[
                 dict(
                     type='LoadPointsFromFile',
@@ -336,7 +336,7 @@ data = dict(
     val=dict(
         type='NuScenesDataset',
         data_root='data/nuscenes/',
-        ann_file='ASAP/out/lidar_20Hz/20Hz_lidar_infos_val.pkl',   # TODO modify your path
+        ann_file='/data/smx/ASAP/out/lidar_20Hz/20Hz_lidar_infos_val.pkl',   # TODO modify your path
         pipeline=[
             dict(
                 type='LoadPointsFromFile',
@@ -392,7 +392,7 @@ data = dict(
     test=dict(
         type='NuScenesDataset',
         data_root='data/nuscenes/',
-        ann_file='ASAP/out/lidar_20Hz/20Hz_lidar_infos_val.pkl',  # TODO modify your path
+        ann_file='/data/smx/ASAP/out/lidar_20Hz/20Hz_lidar_infos_val.pkl',  # TODO modify your path
         pipeline=[
             dict(
                 type='LoadPointsFromFile',

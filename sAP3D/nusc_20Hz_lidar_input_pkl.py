@@ -100,9 +100,10 @@ def fill_val_infos(nusc, val_scene_tokens):
     val_nusc_infos = []
     non_key_nums = []
 
+    scene_token_set = set(val_scene_tokens)
     for sample in mmcv.track_iter_progress(nusc.sample):
 
-        if sample['scene_token'] in val_scene_tokens:
+        if sample['scene_token'] in scene_token_set:
             # obtain info for a single key-frame
             lidar_token = sample['data']['LIDAR_TOP']
             sample_token = sample['token']
@@ -127,22 +128,25 @@ def fill_val_infos(nusc, val_scene_tokens):
     return val_nusc_infos, non_key_nums
 
 
-def get_nusc_val_scene_token(nusc):
+def get_nusc_scene_tokens(nusc, split='val'):
     splits = create_splits_scenes()
-    val_scene_ids = splits['val']
-    val_scene_tokens = []
+    if split == 'trainval':
+        wanted = set(splits['train']) | set(splits['val'])
+    else:
+        wanted = set(splits[split])
+    scene_tokens = []
     for scene in nusc.scene:
-        if scene['name'] in val_scene_ids:
-            val_scene_tokens.append(scene['token'])
-    return val_scene_tokens
+        if scene['name'] in wanted:
+            scene_tokens.append(scene['token'])
+    return scene_tokens
 
 
-def create_nuscenes_infos(nusc, version='v1.0-trainval'):
-    val_scene_tokens = get_nusc_val_scene_token(nusc)
-    val_nusc_infos, non_key_nums = fill_val_infos(nusc, val_scene_tokens)
+def create_nuscenes_infos(nusc, version='v1.0-trainval', split='val'):
+    scene_tokens = get_nusc_scene_tokens(nusc, split=split)
+    nusc_infos, non_key_nums = fill_val_infos(nusc, scene_tokens)
     metadata = dict(version=version)
-    print('val sample: {}'.format(len(val_nusc_infos)))
-    data = dict(infos=val_nusc_infos, metadata=metadata)
+    print('{} sample: {}'.format(split, len(nusc_infos)))
+    data = dict(infos=nusc_infos, metadata=metadata)
     return data, non_key_nums
 
 
@@ -151,10 +155,12 @@ if __name__ == '__main__':
     opts = options.parse()
     print('loading nuscenes dataset...')
     nusc = NuScenes(version=opts.data_version, dataroot=opts.data_path, verbose=False)
-    nusc_infos, non_key_nums = create_nuscenes_infos(nusc, version=opts.data_version)
-    # save
-    info_val_path = os.path.join('./out/lidar_20Hz', '20Hz_lidar_infos_val.pkl')
-    mmcv.dump(nusc_infos, info_val_path)
+    nusc_infos, non_key_nums = create_nuscenes_infos(nusc, version=opts.data_version, split=opts.split)
+    # save (name includes split to avoid overwriting previous output)
+    os.makedirs('./out/lidar_20Hz', exist_ok=True)
+    info_path = os.path.join('./out/lidar_20Hz', '20Hz_lidar_infos_{}.pkl'.format(opts.split))
+    mmcv.dump(nusc_infos, info_path)
+    print('saved: {}'.format(info_path))
     non_key_nums = np.array(non_key_nums)
     # non_key_nums mean:8.719388602757933, std:1.4948017225512469, min:0, max:11
     print("non_key_nums mean:{}, std:{}, min:{}, max:{}".format(np.mean(non_key_nums), np.std(non_key_nums), np.min(non_key_nums), np.max(non_key_nums)))

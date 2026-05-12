@@ -96,17 +96,21 @@ def get_new_ann(nusc, key_frame_token, timestamp, frame_idx, hz_factor, next_ins
     return new_anns
 
 
-def get_nusc_val_token(nusc):
+def get_nusc_val_token(nusc, split='val'):
     splits = create_splits_scenes()
-    val_scene_ids = splits['val']
+    if split == 'trainval':
+        val_scene_ids = list(splits['train']) + list(splits['val'])
+    else:
+        val_scene_ids = list(splits[split])
+    val_scene_ids_set = set(val_scene_ids)
     sample_tokens_all = [s['token'] for s in nusc.sample]
     sample_val_tokens = []
     for sample_token in sample_tokens_all:
         scene_token = nusc.get('sample', sample_token)['scene_token']
         scene_record = nusc.get('scene', scene_token)
-        if scene_record['name'] in val_scene_ids:
+        if scene_record['name'] in val_scene_ids_set:
             sample_val_tokens.append(sample_token)
-    print("total samples in val: {}".format(len(sample_val_tokens)))  # 6019
+    print("total samples in {}: {}".format(split, len(sample_val_tokens)))
     return sample_val_tokens, val_scene_ids
 
 
@@ -272,12 +276,13 @@ def generate_sample_with_ann(opts, nusc, sample_val_tokens):
 
 def generate_sample_data(opts, nusc, val_scene_ids):
     hz_factor = int(opts.ann_frequency / key_frame_frequency)  # keyframe rate = 2Hz
+    val_scene_ids_set = set(val_scene_ids)
     new_sample_data_list = []
     for this_sample_data in tqdm(nusc.sample_data):
         if this_sample_data['is_key_frame'] is False:
             continue
         this_scene_token = nusc.get('sample', this_sample_data['sample_token'])['scene_token']
-        if nusc.get('scene', this_scene_token)['name'] not in val_scene_ids:
+        if nusc.get('scene', this_scene_token)['name'] not in val_scene_ids_set:
             continue
         if nusc.get('sample', this_sample_data['sample_token'])['next'] == '':
             frame0 = copy.deepcopy(this_sample_data)
@@ -358,18 +363,19 @@ if __name__ == '__main__':
 
     # generate sample list and sample_annotation list
     print('processing sample lists and annotation lists...')
-    sample_val_tokens, val_scene_ids = get_nusc_val_token(nusc)
+    sample_val_tokens, val_scene_ids = get_nusc_val_token(nusc, split=opts.split)
     new_sample_list, new_sample_annotation_list = generate_sample_with_ann(opts, nusc, sample_val_tokens)
 
     # gnerate sample_data list
     print('processing sample data lists...')
     new_sample_data_list = generate_sample_data(opts, nusc, val_scene_ids)
     # new_sample_data_list = None
-   
+
     # save new json files
     out_dir = save_json(opts, new_sample_list, new_sample_annotation_list, new_sample_data_list)
 
-    # cp to ./data/nuscenes/
-    final_path = os.path.join(opts.data_path, '{}_{}Hz_trainval'.format(opts.ann_strategy, opts.ann_frequency))
+    # cp to <data_path>/<ann_strategy>_<ann_frequency>Hz_<split>/
+    final_path = os.path.join(opts.data_path, '{}_{}Hz_{}'.format(opts.ann_strategy, opts.ann_frequency, opts.split))
+    os.system('rm -rf {}'.format(final_path))
     os.system('cp -r {} {}'.format(out_dir, final_path))
-    
+    print('Final dataset copied to: {}'.format(final_path))
