@@ -25,10 +25,10 @@ class SP3DOptions:
                                 type=str,
                                 default='v1.0-trainval')
         self.parser.add_argument('--split',
-                                help='nuscenes split to process: val/train/trainval',
+                                help='nuscenes split to process: val/train/trainval/mini/mini_train/mini_val',
                                 type=str,
                                 default='val',
-                                choices=['val', 'train', 'trainval'])
+                                choices=['val', 'train', 'trainval', 'mini', 'mini_train', 'mini_val'])
         self.parser.add_argument('--input_frequency', 
                                 help='input frequency',
                                 type=int,

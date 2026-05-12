@@ -132,6 +132,8 @@ def get_nusc_scene_tokens(nusc, split='val'):
     splits = create_splits_scenes()
     if split == 'trainval':
         wanted = set(splits['train']) | set(splits['val'])
+    elif split == 'mini':
+        wanted = set(splits['mini_train']) | set(splits['mini_val'])
     else:
         wanted = set(splits[split])
     scene_tokens = []

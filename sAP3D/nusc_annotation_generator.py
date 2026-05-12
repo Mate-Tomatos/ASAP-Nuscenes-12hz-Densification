@@ -100,6 +100,8 @@ def get_nusc_val_token(nusc, split='val'):
     splits = create_splits_scenes()
     if split == 'trainval':
         val_scene_ids = list(splits['train']) + list(splits['val'])
+    elif split == 'mini':
+        val_scene_ids = list(splits['mini_train']) + list(splits['mini_val'])
     else:
         val_scene_ids = list(splits[split])
     val_scene_ids_set = set(val_scene_ids)

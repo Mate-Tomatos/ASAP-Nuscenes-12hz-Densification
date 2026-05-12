@@ -95,9 +95,14 @@ def fill_val_infos(nusc, val_scene_tokens):
     return coco_2d_dict, non_key_nums
 
 
-def get_nusc_val_scene_token(nusc):
+def get_nusc_val_scene_token(nusc, split='val'):
     splits = create_splits_scenes()
-    val_scene_ids = splits['val']
+    if split == 'trainval':
+        val_scene_ids = list(splits['train']) + list(splits['val'])
+    elif split == 'mini':
+        val_scene_ids = list(splits['mini_train']) + list(splits['mini_val'])
+    else:
+        val_scene_ids = list(splits[split])
     val_scene_tokens = []
     for scene in nusc.scene:
         if scene['name'] in val_scene_ids:
@@ -105,11 +110,11 @@ def get_nusc_val_scene_token(nusc):
     return val_scene_tokens
 
 
-def create_nuscenes_infos(nusc):
+def create_nuscenes_infos(nusc, split='val'):
 
-    val_scene_tokens = get_nusc_val_scene_token(nusc)
+    val_scene_tokens = get_nusc_val_scene_token(nusc, split=split)
     coco_2d_dict, non_key_nums = fill_val_infos(nusc, val_scene_tokens)
-    print('val sample: {}'.format(len(coco_2d_dict['images'])))
+    print('{} sample: {}'.format(split, len(coco_2d_dict['images'])))
     return coco_2d_dict, non_key_nums
 
 
@@ -119,9 +124,11 @@ if __name__ == '__main__':
     opts = options.parse()
     print('loading nuscenes dataset...')
     nusc = NuScenes(version=opts.data_version, dataroot=opts.data_path, verbose=False)
-    coco_2d_dict, non_key_nums = create_nuscenes_infos(nusc)
-    # save
-    save_path = os.path.join('./out/img_12Hz', 'nuscenes_infos_val_12Hz_mono3d.coco.json')
+    coco_2d_dict, non_key_nums = create_nuscenes_infos(nusc, split=opts.split)
+    # save (filename includes split to avoid overwriting previous output)
+    os.makedirs('./out/img_12Hz', exist_ok=True)
+    save_path = os.path.join('./out/img_12Hz', 'nuscenes_infos_{}_12Hz_mono3d.coco.json'.format(opts.split))
     mmcv.dump(coco_2d_dict, save_path)
+    print('saved: {}'.format(save_path))
     non_key_nums = np.array(non_key_nums)
     print("non_key_nums mean:{}, std:{}, min:{}, max:{}".format(np.mean(non_key_nums), np.std(non_key_nums), np.min(non_key_nums), np.max(non_key_nums)))
